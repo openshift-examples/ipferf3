@@ -1,0 +1,33 @@
+kind: DaemonSet
+apiVersion: apps/v1
+metadata:
+  annotations:
+  name: iperf
+  labels:
+    app: iperf
+spec:
+  selector:
+    matchLabels:
+      app: iperf
+  template:
+    metadata:
+      labels:
+        app: iperf
+    spec:
+      containers:
+        - name: server
+          image: 'quay.io/dfroehli/tools-iperf:latest'
+          resources:
+            requests:
+              cpu: 4
+              memory: 128Mi
+            limits:
+              cpu: 4
+              memory: 128Mi
+          ports:
+            - containerPort: 5201
+              protocol: TCP
+          env:
+            - name: IPERF_OPT
+              value: '--server'
+      securityContext: {}
