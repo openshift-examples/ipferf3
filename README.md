@@ -9,9 +9,14 @@ tags:
 # Network Performance analyze via iperf3
 
 Start daemon sets
-* iperf.daemonset.yaml
-* iperf-hostnetwork.daemonset.yaml
 
+```
+oc new-project iperf-test
+oc apply -f iperf.daemonset.yaml
+oc create sa hostnetwork
+oc adm policy add-scc-to-user hostnetwork-v2 -z hostnetwork
+oc apply -f iperf-hostnetwork.daemonset.yaml
+```
 Run network performance tests via:
 
 ```bash
