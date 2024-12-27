@@ -1,0 +1,35 @@
+kind: DaemonSet
+apiVersion: apps/v1
+metadata:
+  name: stress-cpu-server
+  labels:
+    app: stress-cpu-server
+spec:
+  selector:
+    matchLabels:
+      app: stress-cpu-server
+  template:
+    metadata:
+      labels:
+        app: stress-cpu-server
+    spec:
+      containers:
+        - name: stress-cpu
+          image: 'quay.io/dfroehli/tools-stress:latest'
+          env:
+            - name: STRESS_ARGS
+              value: '--cpu 8'
+          resources:
+            requests:
+              cpu: 8
+              memory: 1024Mi
+            limits:
+              cpu: 8
+              memory: 1024Mi
+          imagePullPolicy: IfNotPresent
+      nodeSelector:
+        iperf-deploy: 'true'
+      tolerations:
+      - key: "node.kubernetes.io/unschedulable"
+        operator: "Exists"
+        effect: "NoSchedule"

@@ -1,0 +1,111 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  annotations:
+  name: iperf-server
+  labels:
+    app: iperf-server
+spec:
+  replicas: 1
+  strategy:
+      type: Recreate
+  selector:
+    matchLabels:
+      app: iperf-server
+  template:
+    metadata:
+      labels:
+        app: iperf-server
+    spec:
+      containers:
+        - name: iperf-server
+          image: 'quay.io/dfroehli/tools-iperf:latest'
+          resources:
+            requests:
+              cpu: 4
+              memory: 128Mi
+            limits:
+              cpu: 4
+              memory: 128Mi
+          ports:
+            - containerPort: 5201
+              protocol: TCP
+          env:
+            - name: IPERF_OPT
+              value: '--server'
+      nodeSelector:
+        kubernetes.io/hostname: inf7
+      securityContext: {}
+---
+kind: Service
+apiVersion: v1
+metadata:
+  annotations:
+  name: iperf-server
+  labels:
+    app: iperf-server
+spec:
+  ports:
+    - name: 5201-tcp
+      protocol: TCP
+      port: 5201
+      targetPort: 5201
+    - name: 5201-udp
+      protocol: UDP
+      port: 5201
+      targetPort: 5201
+  selector:
+    app: iperf-server
+  type: ClusterIP
+  sessionAffinity: None
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: iperf-client
+  labels:
+    app: iperf-client
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: iperf-client
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: iperf-client
+    spec:
+#  Explicit node:
+      nodeSelector:
+        kubernetes.io/hostname: inf44
+# Co-Located with sender:
+
+        # affinity:
+        # podAffinity:
+        #   requiredDuringSchedulingIgnoredDuringExecution:
+        #   - labelSelector:
+        #       matchExpressions:
+        #       - key: app
+        #         operator: In
+        #         values:
+        #         - iperf-server
+        #     topologyKey: "kubernetes.io/hostname"
+
+      containers:
+        - name: iperf-client
+          image: 'quay.io/dfroehli/tools-iperf:latest'
+          env:
+            - name: IPERF_OPT
+              value: ' --client iperf-server --time 60 --parallel 4'
+          resources: {}
+          imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              cpu: 4
+              memory: 128Mi
+            limits:
+              cpu: 4
+              memory: 128Mi

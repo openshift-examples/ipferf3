@@ -1,0 +1,91 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: stress-cpu-server
+  labels:
+    app: stress-cpu-server
+spec:
+  replicas: 2
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: stress-cpu-server
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: stress-cpu-server
+    spec:
+      containers:
+        - name: stress-cpu
+          image: 'quay.io/dfroehli/tools-stress:latest'
+          env:
+            - name: STRESS_ARGS
+              value: '--cpu 8'
+          resources:
+            requests:
+              cpu: 8
+              memory: 1024Mi
+            limits:
+              cpu: 8
+              memory: 1024Mi
+          imagePullPolicy: IfNotPresent
+      nodeSelector:
+        iperf-deploy: 'true' 
+      affinity:
+         podAffinity:
+           requiredDuringSchedulingIgnoredDuringExecution:
+           - labelSelector:
+               matchExpressions:
+               - key: app
+                 operator: In
+                 values:
+                 - iperf-server
+             topologyKey: "kubernetes.io/hostname"
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: stress-cpu-client
+  labels:
+    app: stress-cpu-client
+spec:
+  replicas: 3
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: stress-cpu-client
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: stress-cpu-client
+    spec:
+      containers:
+        - name: stress-cpu
+          image: 'quay.io/dfroehli/tools-stress:latest'
+          env:
+            - name: STRESS_ARGS
+              value: '--cpu 2'
+          resources:
+            requests:
+              cpu: 2
+              memory: 1024Mi
+            limits:
+              cpu: 2
+              memory: 1024Mi
+          imagePullPolicy: IfNotPresent
+#      nodeSelector:
+#        kubernetes.io/hostname: inf44
+      affinity:
+         podAffinity:
+           requiredDuringSchedulingIgnoredDuringExecution:
+           - labelSelector:
+               matchExpressions:
+               - key: app
+                 operator: In
+                 values:
+                 - iperf-client
+             topologyKey: "kubernetes.io/hostname"
